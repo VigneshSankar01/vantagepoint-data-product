@@ -17,3 +17,8 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "data_lake" {
     }
   }
 }
+
+#S3 Bucket for Glue Scripts
+resource "aws_s3_bucket" "glue_scripts" {
+  bucket = "vantagepoint-glue-scripts"
+}

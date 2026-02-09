@@ -71,3 +71,72 @@ resource "snowflake_table" "opportunities" {
     type = "VARCHAR(50)"
   }
 }
+
+
+#Snowflake tables for the usage and interactions logs
+
+resource "snowflake_table" "usage_logs" {
+  database = snowflake_database.prod.name
+  schema   = snowflake_schema.b2bsaas.name
+  name     = "USAGE_LOGS"
+
+  column {
+    name = "SESSION_ID"
+    type = "VARCHAR(50)"
+  }
+  column {
+    name = "ACCOUNT_ID"
+    type = "VARCHAR(50)"
+  }
+  column {
+    name = "USER_ID"
+    type = "VARCHAR(50)"
+  }
+  column {
+    name = "FEATURE_USED"
+    type = "VARCHAR(100)"
+  }
+  column {
+    name = "SESSION_DURATION_SECONDS"
+    type = "NUMBER(10,0)"
+  }
+  column {
+    name = "ERROR_CODES_ENCOUNTERED"
+    type = "VARCHAR(50)"
+  }
+  column {
+    name = "TIMESTAMP"
+    type = "TIMESTAMP_NTZ"
+  }
+}
+
+resource "snowflake_table" "interaction_transcripts" {
+  database = snowflake_database.prod.name
+  schema   = snowflake_schema.b2bsaas.name
+  name     = "INTERACTION_TRANSCRIPTS"
+
+  column {
+    name = "INTERACTION_ID"
+    type = "VARCHAR(50)"
+  }
+  column {
+    name = "ACCOUNT_ID"
+    type = "VARCHAR(50)"
+  }
+  column {
+    name = "OPPORTUNITY_ID"
+    type = "VARCHAR(50)"
+  }
+  column {
+    name = "TIMESTAMP"
+    type = "TIMESTAMP_NTZ"
+  }
+  column {
+    name = "INTERACTION_TYPE"
+    type = "VARCHAR(30)"
+  }
+  column {
+    name = "TRANSCRIPT_BODY"
+    type = "VARCHAR(5000)"
+  }
+}
