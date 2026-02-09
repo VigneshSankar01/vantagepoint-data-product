@@ -33,3 +33,6 @@ Thumbs.db
 #Data Generation codes
 data-generation/usage_logs/
 data-generation/transcripts/
+
+#Snowflake JAR Files for Glue
+pipelines/glue/jars/
