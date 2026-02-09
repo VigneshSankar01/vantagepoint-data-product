@@ -24,8 +24,9 @@ locals {
 }
 
 provider "snowflake" {
-  organization_name = "XVPQLZL"
-  account_name      = "SZC19072"
-  user              = local.sf_creds["username"]
-  password          = local.sf_creds["password"]
+  organization_name        = "XVPQLZL"
+  account_name             = "SZC19072"
+  user                     = local.sf_creds["username"]
+  password                 = local.sf_creds["password"]
+  preview_features_enabled = ["snowflake_table_resource"]
 }
