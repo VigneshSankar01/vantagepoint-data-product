@@ -29,3 +29,7 @@ Thumbs.db
 # Environment
 .env
 *.env
+
+#Data Generation codes
+data-generation/usage_logs/
+data-generation/transcripts/
