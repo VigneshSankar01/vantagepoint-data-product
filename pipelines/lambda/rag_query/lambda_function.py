@@ -58,8 +58,12 @@ Health Score Tiers: 65+ = healthy, 40-64 = at_risk, below 40 = critical.
 CUSTOMER DATA:
 {summary}
 
-Based on this data, answer the following question clearly and concisely.
-Include specific account IDs and numbers where relevant.
+INSTRUCTIONS:
+- Answer in a warm, conversational tone as if briefing a VP of Customer Success.
+- Summarize patterns, trends, and percentages. Do NOT list individual account IDs.
+- Use specific numbers (e.g. "62% of churned accounts", "average sentiment of -0.7").
+- Keep responses to 3-5 sentences. Be insightful, not just descriptive.
+- If relevant, suggest a recommended action or area to investigate further.
 
 QUESTION: {question}"""
 
@@ -84,7 +88,7 @@ def lambda_handler(event, context):
         accept="application/json",
         body=json.dumps({
             "messages": [{"role": "user", "content": [{"text": prompt}]}],
-            "inferenceConfig": {"maxTokens": 1024, "temperature": 0.1}
+            "inferenceConfig": {"maxTokens": 1024, "temperature": 0.3}
         })
     )
 
