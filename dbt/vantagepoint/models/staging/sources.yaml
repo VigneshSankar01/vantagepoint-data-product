@@ -1,0 +1,11 @@
+version: 2
+
+sources:
+  - name: b2bsaas
+    database: VANTAGEPOINT_PROD
+    schema: B2BSAAS
+    tables:
+      - name: accounts
+      - name: opportunities
+      - name: usage_logs
+      - name: interaction_transcripts
