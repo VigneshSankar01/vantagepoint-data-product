@@ -77,7 +77,8 @@ jobs:
     if: |
       github.event_name == 'issue_comment' &&
       github.event.comment.body == 'terraform apply' &&
-      github.event.issue.pull_request
+      github.event.issue.pull_request &&
+      (github.event.comment.author_association == 'OWNER' || github.event.comment.author_association == 'COLLABORATOR')
     runs-on: ubuntu-latest
     defaults:
       run:
