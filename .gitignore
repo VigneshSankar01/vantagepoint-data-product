@@ -45,3 +45,7 @@ pipelines/lambda/process_transcripts/*.zip
 pipelines/lambda/get_account_transcripts/*.zip
 pipelines/lambda/get_dashboard_data/*.zip
 pipelines/lambda/rag_query/*.zip
+
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
