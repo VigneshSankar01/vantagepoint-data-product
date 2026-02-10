@@ -1,6 +1,90 @@
 import { useState, useEffect } from "react";
+import { CognitoUserPool, CognitoUser, AuthenticationDetails } from "amazon-cognito-identity-js";
 
 const API = "https://6odxcq4waj.execute-api.us-east-1.amazonaws.com/api";
+
+const COGNITO_USER_POOL_ID = "us-east-1_KvDkfPdr3";
+const COGNITO_CLIENT_ID = "6pf0reahbicimes0m8gcb1jjn5";
+
+const userPool = new CognitoUserPool({
+  UserPoolId: COGNITO_USER_POOL_ID,
+  ClientId: COGNITO_CLIENT_ID,
+});
+
+function authFetch(url, token, options = {}) {
+  return fetch(url, {
+    ...options,
+    headers: {
+      ...options.headers,
+      "Content-Type": "application/json",
+      Authorization: token,
+    },
+  });
+}
+
+function LoginScreen({ onLogin }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = () => {
+    if (!email || !password) return;
+    setLoading(true);
+    setError(null);
+
+    const user = new CognitoUser({ Username: email, Pool: userPool });
+    const authDetails = new AuthenticationDetails({ Username: email, Password: password });
+
+    user.authenticateUser(authDetails, {
+      onSuccess: (result) => {
+        const token = result.getIdToken().getJwtToken();
+        onLogin(token);
+      },
+      onFailure: (err) => {
+        setError(err.message || "Login failed");
+        setLoading(false);
+      },
+    });
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-extrabold text-white tracking-tight">VantagePoint</h1>
+          <p className="text-sm text-gray-400 mt-2 italic">Customer Intelligence Platform</p>
+        </div>
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+          <h2 className="text-lg font-semibold text-white mb-4">Sign In</h2>
+          {error && <p className="text-red-400 text-sm mb-3 bg-red-950/30 border border-red-800/40 rounded-lg p-2">{error}</p>}
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+          />
+          <button
+            onClick={handleLogin}
+            disabled={loading || !email || !password}
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:text-gray-500 text-white py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            {loading ? "Signing in..." : "Sign In"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function getRisk(a) {
   if (a.IS_CHURNED) return "churned";
@@ -17,7 +101,7 @@ const tierBadge = {
 };
 const tierLabel = { healthy: "Healthy", at_risk: "At Risk", critical: "Critical", churned: "Churned" };
 
-function ExpandedRow({ account }) {
+function ExpandedRow({ account, token }) {
   const [transcripts, setTranscripts] = useState([]);
   const [loadingTx, setLoadingTx] = useState(true);
   const [recommendation, setRecommendation] = useState(null);
@@ -26,20 +110,17 @@ function ExpandedRow({ account }) {
   const [loadingTxSum, setLoadingTxSum] = useState(true);
 
   useEffect(() => {
-    // Fetch transcripts, then summarize them
-    fetch(`${API}/account/${account.ACCOUNT_ID}/transcripts`)
+    authFetch(`${API}/account/${account.ACCOUNT_ID}/transcripts`, token)
       .then((r) => r.json())
       .then((data) => {
         const list = Array.isArray(data) ? data : data.transcripts || [];
         setTranscripts(list);
         setLoadingTx(false);
 
-        // Summarize transcripts if we have any with body text
         const bodies = list.filter((t) => t.TRANSCRIPT_BODY).map((t) => `[${t.INTERACTION_TYPE} | ${t.TIMESTAMP || "unknown date"} | Sentiment: ${t.SENTIMENT_SCORE}]\n${t.TRANSCRIPT_BODY}`);
         if (bodies.length > 0) {
-          fetch(`${API}/rag`, {
+          authFetch(`${API}/rag`, token, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               query: `Summarize the following customer interaction transcripts for account ${account.ACCOUNT_ID} (${account.INDUSTRY}, ${account.TIER} tier). Highlight the key themes, recurring issues, tone shifts over time, and overall customer experience trajectory. Keep it to 3-4 sentences. Be specific about what the customer complained about or discussed.\n\nTRANSCRIPTS:\n${bodies.join("\n\n")}`
             }),
@@ -54,10 +135,8 @@ function ExpandedRow({ account }) {
       })
       .catch(() => { setLoadingTx(false); setLoadingTxSum(false); });
 
-    // Account recommendation
-    fetch(`${API}/rag`, {
+    authFetch(`${API}/rag`, token, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         query: `Give a brief, actionable recommendation for account ${account.ACCOUNT_ID}. This is a ${account.TIER} tier ${account.INDUSTRY} account with a health score of ${account.HEALTH_SCORE}, sentiment of ${account.AVG_SENTIMENT}, ${account.SUPPORT_TICKET_COUNT} support tickets, ${account.DAYS_SINCE_LAST_ACTIVE} days inactive, and top complaint category: ${account.TOP_COMPLAINT_CATEGORY || "none"}. ${account.IS_CHURNED ? "This account has already churned." : ""} What specific steps should the customer success team take? Keep it to 2-3 sentences.`
       }),
@@ -73,7 +152,6 @@ function ExpandedRow({ account }) {
     <tr>
       <td colSpan={8} className="p-0">
         <div className="bg-gray-900/50 border-t border-b border-gray-700 px-6 py-5">
-          {/* Header */}
           <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
             <div>
               <span className="text-lg font-bold text-white">{account.ACCOUNT_ID}</span>
@@ -88,7 +166,6 @@ function ExpandedRow({ account }) {
             </div>
           </div>
 
-          {/* Signals */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
             {[
               ["Sessions", account.TOTAL_SESSIONS],
@@ -107,7 +184,6 @@ function ExpandedRow({ account }) {
             ))}
           </div>
 
-          {/* AI Recommendation */}
           <div className="mb-5 bg-blue-950/40 border border-blue-800/50 rounded-xl p-4">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-sm font-semibold text-blue-400">✦ AI-Assisted Recommendation</span>
@@ -122,10 +198,8 @@ function ExpandedRow({ account }) {
             </p>
           </div>
 
-          {/* Transcripts */}
           <p className="font-semibold text-sm text-gray-300 mb-2 uppercase tracking-wide">Interaction Transcripts</p>
 
-          {/* Transcript Summary */}
           {!loadingTxSum && txSummary && (
             <div className="mb-4 bg-purple-950/30 border border-purple-800/40 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
@@ -179,7 +253,7 @@ function ExpandedRow({ account }) {
   );
 }
 
-function App() {
+function Dashboard({ token }) {
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -191,7 +265,7 @@ function App() {
   const [expanded, setExpanded] = useState(null);
 
   useEffect(() => {
-    fetch(`${API}/dashboard`)
+    authFetch(`${API}/dashboard`, token)
       .then((r) => r.json())
       .then((data) => { setAccounts(Array.isArray(data) ? data : data.accounts || []); setLoading(false); })
       .catch((err) => { setError(err.message); setLoading(false); });
@@ -319,7 +393,7 @@ function App() {
                       <td className="px-4 py-3 text-gray-300">{a.SUPPORT_TICKET_COUNT ?? <span className="text-gray-600">—</span>}</td>
                       <td className="px-4 py-3 text-gray-300">{a.DAYS_SINCE_LAST_ACTIVE ?? <span className="text-gray-600">—</span>}</td>
                     </tr>
-                    {isOpen && <ExpandedRow key={`${a.ACCOUNT_ID}-detail`} account={a} />}
+                    {isOpen && <ExpandedRow key={`${a.ACCOUNT_ID}-detail`} account={a} token={token} />}
                   </>
                 );
               })}
@@ -329,6 +403,13 @@ function App() {
       </main>
     </div>
   );
+}
+
+function App() {
+  const [token, setToken] = useState(null);
+
+  if (!token) return <LoginScreen onLogin={setToken} />;
+  return <Dashboard token={token} />;
 }
 
 export default App;
