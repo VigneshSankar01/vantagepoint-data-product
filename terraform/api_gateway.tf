@@ -59,7 +59,7 @@ resource "aws_apigatewayv2_api" "main" {
   cors_configuration {
     allow_origins = ["*"]
     allow_methods = ["GET", "POST", "OPTIONS"]
-    allow_headers = ["Content-Type"]
+    allow_headers = ["Content-Type", "Authorization"]
     max_age       = 3600
   }
 }
@@ -68,6 +68,19 @@ resource "aws_apigatewayv2_stage" "prod" {
   api_id      = aws_apigatewayv2_api.main.id
   name        = "$default"
   auto_deploy = true
+}
+
+# Cognito JWT Authorizer
+resource "aws_apigatewayv2_authorizer" "cognito" {
+  api_id           = aws_apigatewayv2_api.main.id
+  authorizer_type  = "JWT"
+  identity_sources = ["$request.header.Authorization"]
+  name             = "cognito-authorizer"
+
+  jwt_configuration {
+    audience = [aws_cognito_user_pool_client.frontend.id]
+    issuer   = "https://cognito-idp.us-east-1.amazonaws.com/${aws_cognito_user_pool.main.id}"
+  }
 }
 
 # Dashboard endpoint
@@ -79,9 +92,11 @@ resource "aws_apigatewayv2_integration" "dashboard" {
 }
 
 resource "aws_apigatewayv2_route" "dashboard" {
-  api_id    = aws_apigatewayv2_api.main.id
-  route_key = "GET /api/dashboard"
-  target    = "integrations/${aws_apigatewayv2_integration.dashboard.id}"
+  api_id             = aws_apigatewayv2_api.main.id
+  route_key          = "GET /api/dashboard"
+  target             = "integrations/${aws_apigatewayv2_integration.dashboard.id}"
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
 }
 
 resource "aws_lambda_permission" "dashboard_apigw" {
@@ -100,9 +115,11 @@ resource "aws_apigatewayv2_integration" "rag" {
 }
 
 resource "aws_apigatewayv2_route" "rag" {
-  api_id    = aws_apigatewayv2_api.main.id
-  route_key = "POST /api/rag"
-  target    = "integrations/${aws_apigatewayv2_integration.rag.id}"
+  api_id             = aws_apigatewayv2_api.main.id
+  route_key          = "POST /api/rag"
+  target             = "integrations/${aws_apigatewayv2_integration.rag.id}"
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
 }
 
 resource "aws_lambda_permission" "rag_apigw" {
@@ -112,8 +129,7 @@ resource "aws_lambda_permission" "rag_apigw" {
   source_arn    = "${aws_apigatewayv2_api.main.execution_arn}/*/*"
 }
 
-
-#One Lambda function for retrieving the summary Transcript:
+# Account Transcripts Lambda
 data "archive_file" "get_account_transcripts" {
   type        = "zip"
   source_file = "${path.module}/../pipelines/lambda/get_account_transcripts/lambda_function.py"
@@ -147,9 +163,11 @@ resource "aws_apigatewayv2_integration" "transcripts" {
 }
 
 resource "aws_apigatewayv2_route" "transcripts" {
-  api_id    = aws_apigatewayv2_api.main.id
-  route_key = "GET /api/account/{account_id}/transcripts"
-  target    = "integrations/${aws_apigatewayv2_integration.transcripts.id}"
+  api_id             = aws_apigatewayv2_api.main.id
+  route_key          = "GET /api/account/{account_id}/transcripts"
+  target             = "integrations/${aws_apigatewayv2_integration.transcripts.id}"
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
 }
 
 resource "aws_lambda_permission" "transcripts_apigw" {
