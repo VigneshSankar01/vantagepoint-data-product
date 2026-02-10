@@ -37,44 +37,6 @@ resource "snowflake_table" "accounts" {
   }
 }
 
-resource "snowflake_table" "opportunities" {
-  database = snowflake_database.prod.name
-  schema   = snowflake_schema.b2bsaas.name
-  name     = "OPPORTUNITIES"
-
-  column {
-    name = "OPPORTUNITY_ID"
-    type = "VARCHAR(50)"
-  }
-  column {
-    name = "ACCOUNT_ID"
-    type = "VARCHAR(50)"
-  }
-  column {
-    name = "PRODUCT_CODE"
-    type = "VARCHAR(50)"
-  }
-  column {
-    name = "STAGE"
-    type = "VARCHAR(20)"
-  }
-  column {
-    name = "AMOUNT_GBP"
-    type = "NUMBER(15,2)"
-  }
-  column {
-    name = "CLOSE_DATE"
-    type = "DATE"
-  }
-  column {
-    name = "LEAD_SOURCE"
-    type = "VARCHAR(50)"
-  }
-}
-
-
-#Snowflake tables for the usage and interactions logs
-
 resource "snowflake_table" "usage_logs" {
   database = snowflake_database.prod.name
   schema   = snowflake_schema.b2bsaas.name
@@ -138,5 +100,48 @@ resource "snowflake_table" "interaction_transcripts" {
   column {
     name = "TRANSCRIPT_BODY"
     type = "VARCHAR(5000)"
+  }
+  column {
+    name = "SENTIMENT_SCORE"
+    type = "FLOAT"
+  }
+  column {
+    name = "COMPLAINT_CATEGORY"
+    type = "VARCHAR(50)"
+  }
+}
+
+resource "snowflake_table" "opportunities" {
+  database = snowflake_database.prod.name
+  schema   = snowflake_schema.b2bsaas.name
+  name     = "OPPORTUNITIES"
+
+  column {
+    name = "OPPORTUNITY_ID"
+    type = "VARCHAR(50)"
+  }
+  column {
+    name = "ACCOUNT_ID"
+    type = "VARCHAR(50)"
+  }
+  column {
+    name = "PRODUCT_CODE"
+    type = "VARCHAR(50)"
+  }
+  column {
+    name = "STAGE"
+    type = "VARCHAR(20)"
+  }
+  column {
+    name = "AMOUNT_GBP"
+    type = "NUMBER(15,2)"
+  }
+  column {
+    name = "CLOSE_DATE"
+    type = "DATE"
+  }
+  column {
+    name = "LEAD_SOURCE"
+    type = "VARCHAR(50)"
   }
 }

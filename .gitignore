@@ -36,3 +36,9 @@ data-generation/transcripts/
 
 #Snowflake JAR Files for Glue
 pipelines/glue/jars/
+
+#Lambda layer zip files to gitignore
+pipelines/lambda/layer/python/
+pipelines/lambda/layer/snowflake-layer.zip
+pipelines/lambda/list_transcripts/*.zip
+pipelines/lambda/process_transcripts/*.zip
