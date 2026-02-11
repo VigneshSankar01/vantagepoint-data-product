@@ -1,4 +1,8 @@
-{{ config(materialized='table') }}
+{{ config(
+    materialized='incremental',
+    unique_key='account_id',
+    on_schema_change='sync_all_columns'
+) }}
 
 select
     a.account_id,
