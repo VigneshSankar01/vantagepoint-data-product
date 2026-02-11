@@ -10,3 +10,4 @@ select
     sentiment_score,
     complaint_category
 from {{ source('b2bsaas', 'interaction_transcripts') }}
+qualify row_number() over (partition by interaction_id order by timestamp desc) = 1

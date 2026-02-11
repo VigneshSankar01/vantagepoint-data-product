@@ -9,3 +9,4 @@ select
     error_codes_encountered,
     timestamp
 from {{ source('b2bsaas', 'usage_logs') }}
+qualify row_number() over (partition by session_id order by timestamp desc) = 1
