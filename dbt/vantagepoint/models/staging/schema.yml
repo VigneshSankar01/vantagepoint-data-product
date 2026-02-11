@@ -1,0 +1,57 @@
+version: 2
+
+models:
+  - name: stg_accounts
+    columns:
+      - name: account_id
+        tests:
+          - unique
+          - not_null
+      - name: tier
+        tests:
+          - accepted_values:
+              values: ['standard', 'enterprise']
+      - name: is_churned
+        tests:
+          - not_null
+
+  - name: stg_opportunities
+    columns:
+      - name: opportunity_id
+        tests:
+          - unique
+          - not_null
+      - name: account_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_accounts')
+              field: account_id
+      - name: stage
+        tests:
+          - accepted_values:
+              values: ['prospecting', 'closed-won', 'closed-lost']
+
+  - name: stg_usage_logs
+    columns:
+      - name: session_id
+        tests:
+          - unique
+          - not_null
+      - name: account_id
+        tests:
+          - not_null
+
+  - name: stg_interaction_transcripts
+    columns:
+      - name: interaction_id
+        tests:
+          - unique
+          - not_null
+      - name: sentiment_score
+        tests:
+          - not_null
+      - name: complaint_category
+        tests:
+          - accepted_values:
+              values: ['billing', 'performance', 'bugs', 'feature_request', 'onboarding', 'security', 'data_quality', 'general']
