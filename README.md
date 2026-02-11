@@ -95,8 +95,6 @@ vantagepoint-data-product/
 │   │   └── main.jsx               # React entry point
 │   ├── package.json
 │   └── vite.config.js
-└── docs/
-    └── architecture/              # Architecture diagrams and presentation
 ```
 
 ---
@@ -345,9 +343,7 @@ Frontend changes pushed to `master` are **automatically deployed** to Amplify vi
 - **CORS Lockdown** — Restrict `allow_origins` to the Amplify domain only
 - **Federated Auth** — Integrate Cognito with corporate SSO (Okta, Azure AD) via SAML/OIDC
 - **Self-Service Signup** — Enable Cognito self-registration with email verification
-- **Incremental dbt Models** — Switch account_health_score to incremental materialization for large-scale data
 - **Monitoring** — CloudWatch alarms on Lambda errors, API Gateway 4xx/5xx rates, Glue job failures
-- **Data Quality** — dbt tests for schema validation, null checks, and referential integrity
 - **Caching** — API Gateway response caching to reduce Lambda cold starts
 - **WAF** — Enable AWS WAF on Amplify for DDoS protection
 - **Secrets Rotation** — Automatic rotation for Snowflake credentials via Secrets Manager
